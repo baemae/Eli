@@ -5,9 +5,10 @@ first** and falls back to **cloud AI** (Anthropic, OpenAI, Google Gemini, xAI
 Grok, Meta Llama) when no local model is installed or a local model fails.
 
 ```
-ai-app/
+openchat/
 ├── api/   FastAPI · Python 3.13 · uv · ruff · pytest · Ollama SDK · Anthropic / OpenAI SDKs
-└── web/   Next.js 16 · React 19 · TypeScript 7 · Tailwind CSS 4 · shadcn/ui
+├── web/   Next.js 16 · React 19 · TypeScript 7 · Tailwind CSS 4 · shadcn/ui
+└── agent/ LiveKit Agent · Python 3.13 · uv
 ```
 
 ## Quick start
@@ -17,7 +18,7 @@ and optionally [Ollama](https://ollama.com).
 
 ```bash
 # 1. Local models (optional but recommended)
-ollama pull llama3.2
+ollama run gemma3:1b
 
 # 2. API  → http://localhost:8000/docs
 cd api
@@ -42,15 +43,18 @@ project, because speech-to-text, text-to-speech, turn detection and noise
 cancellation run on LiveKit Inference.
 
 ```bash
-# api/.env and agent/.env: the same three values from your LiveKit project
-LIVEKIT_URL=wss://<your-project>.livekit.cloud
-LIVEKIT_API_KEY=...
-LIVEKIT_API_SECRET=...
+# 1. Config: Put the same three values in api/.env and agent/.env
+# LIVEKIT_URL=wss://<your-project>.livekit.cloud
+# LIVEKIT_API_KEY=...
+# LIVEKIT_API_SECRET=...
 
-# Voice agent (new terminal; API must be running)
+# 2. Prepare Agent: Download required voice files
 cd agent
 uv sync
-uv run python voice_agent.py dev
+uv run voice_agent.py download-files
+
+# 3. Run Agent (new terminal; API must be running)
+uv run voice_agent.py dev
 ```
 
 With Docker: fill in agent/.env, then `docker compose --profile voice up --build`.
