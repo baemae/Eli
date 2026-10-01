@@ -1,4 +1,4 @@
-# OpenChat — Full Stack
+# Eli — Full Stack
 
 A production-ready AI chat application. It runs **local models through Ollama
 first** and falls back to **cloud AI** (Anthropic, OpenAI, Google Gemini, xAI

@@ -103,7 +103,7 @@ def test_session_returns_token_that_dispatches_the_agent():
             "provider": "ollama",
             "model": "llama3.2",
             "voice": "calm",
-            "participant_name": "Rizwan",
+            "participant_name": "Mahnoor",
         },
     )
     assert res.status_code == 201
@@ -113,7 +113,7 @@ def test_session_returns_token_that_dispatches_the_agent():
 
     claims = api.TokenVerifier(KEY, SECRET).verify(body["participant_token"])
     assert claims.identity == body["participant_identity"]
-    assert claims.name == "Rizwan"
+    assert claims.name == "Mahnoor"
     assert claims.video.room_join is True
     assert claims.video.room == body["room_name"]
     (dispatch,) = claims.room_config.agents

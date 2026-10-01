@@ -3,10 +3,10 @@
  * The user is a placeholder until authentication is added.
  */
 export const APP_CONFIG = {
-  appName: "OpenChat",
+  appName: "Eli",
   appDescription: "A general-purpose AI assistant",
   user: {
-    name: "Rizwan",
+    name: "Mahnoor",
     subtitle: "Workspace",
   },
 } as const;

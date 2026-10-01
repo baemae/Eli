@@ -1,4 +1,4 @@
-# OpenChat
+# Eli
 
 ## Stack
 

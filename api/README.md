@@ -1,4 +1,4 @@
-# OpenChat — API
+# Eli — API
 
 FastAPI backend. Local Ollama models are used first; cloud providers
 (Anthropic, OpenAI, Gemini, Grok, Meta Llama) are the fallback.
