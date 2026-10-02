@@ -46,7 +46,15 @@ export async function fetchModels(refresh = false, signal?: AbortSignal): Promis
 }
 
 export interface StreamChatOptions {
-  messages: { role: Role; content: string }[];
+  messages: {
+    role: Role;
+    content: string;
+    image?: {
+      dataUrl: string;
+      name: string;
+      type: string;
+    };
+  }[];
   selection: ModelSelection;
   signal: AbortSignal;
   onMeta: (meta: StreamMeta) => void;
@@ -67,10 +75,25 @@ export async function streamChat({
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "text/event-stream" },
       body: JSON.stringify({
-        messages,
-        provider: selection?.provider ?? null,
-        model: selection?.model ?? null,
-      }),
+  messages: messages.map((message) => ({
+    role: message.role,
+    content: message.image
+      ? [
+          ...(message.content
+            ? [{ type: "text", text: message.content }]
+            : []),
+          {
+            type: "image_url",
+            image_url: {
+              url: message.image.dataUrl,
+            },
+          },
+        ]
+      : message.content,
+  })),
+  provider: selection?.provider ?? null,
+  model: selection?.model ?? null,
+}),
       signal,
     });
   } catch (err) {

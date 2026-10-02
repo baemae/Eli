@@ -1,6 +1,6 @@
 """Request and response models shared by the API routes."""
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -9,7 +9,7 @@ Role = Literal["system", "user", "assistant"]
 
 class ChatMessage(BaseModel):
     role: Role
-    content: str = Field(max_length=200_000)
+    content: str | list[dict[str, Any]]
 
 
 class ChatRequest(BaseModel):

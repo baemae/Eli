@@ -15,7 +15,11 @@ import {
 
 import { Markdown } from "@/components/chat/markdown";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import type { ChatMessage } from "@/lib/types";
 
@@ -39,7 +43,10 @@ function IconAction({
           aria-label={label}
           aria-pressed={active}
           onClick={onClick}
-          className={cn("text-muted-foreground hover:text-foreground", active && "text-foreground")}
+          className={cn(
+            "text-muted-foreground hover:text-foreground",
+            active && "text-foreground",
+          )}
         >
           {children}
         </Button>
@@ -51,6 +58,7 @@ function IconAction({
 
 function CopyAction({ text }: { text: string }) {
   const [copied, setCopied] = useState(false);
+
   return (
     <IconAction
       label={copied ? "Copied" : "Copy"}
@@ -72,7 +80,9 @@ function Typing() {
         <i
           key={d}
           className="size-1.5 rounded-full bg-muted-foreground"
-          style={{ animation: `blink 1.2s ${d}ms infinite ease-in-out` }}
+          style={{
+            animation: `blink 1.2s ${d}ms infinite ease-in-out`,
+          }}
         />
       ))}
     </span>
@@ -94,8 +104,20 @@ export function Message({
     return (
       <div className="group flex flex-col items-end gap-1">
         <div className="max-w-[85%] rounded-3xl bg-secondary px-4 py-2.5 text-[15px] leading-7 break-words whitespace-pre-wrap">
+          
+          {/* Attached image */}
+          {message.image && (
+            <img
+              src={message.image.dataUrl}
+              alt={message.image.name}
+              className="mb-2 max-h-80 max-w-full rounded-2xl object-contain"
+            />
+          )}
+
+          {/* User's text */}
           {message.content}
         </div>
+
         <div className="flex items-center gap-1">
           {message.voice && (
             <span className="flex items-center gap-1 px-1 text-xs text-muted-foreground">
@@ -103,6 +125,7 @@ export function Message({
               Spoken
             </span>
           )}
+
           <div className="opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100">
             <CopyAction text={message.content} />
           </div>
@@ -112,18 +135,21 @@ export function Message({
   }
 
   const { meta } = message;
+
   return (
     <div className="group flex gap-4">
       <div className="mt-0.5 grid size-7 shrink-0 place-items-center rounded-lg border bg-background">
         <span className="size-2.5 rounded-sm bg-foreground" />
       </div>
+
       <div className="min-w-0 flex-1">
         {meta?.fallback && meta.notice && (
           <p className="mb-2 flex items-start gap-1.5 rounded-md border border-dashed px-2.5 py-1.5 text-xs text-muted-foreground">
             <TriangleAlertIcon className="mt-px size-3.5 shrink-0" />
+
             <span>
-              Switched to {meta.provider_label} because the selected model was unavailable (
-              {meta.notice}).
+              Switched to {meta.provider_label} because the selected model was
+              unavailable ({meta.notice}).
             </span>
           </p>
         )}
@@ -137,7 +163,12 @@ export function Message({
         {message.error && (
           <div className="mt-2 flex flex-wrap items-center gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
             <span className="flex-1">{message.error}</span>
-            <Button size="sm" variant="outline" onClick={() => onRegenerate(message.id)}>
+
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onRegenerate(message.id)}
+            >
               <RefreshCwIcon />
               Try again
             </Button>
@@ -148,10 +179,13 @@ export function Message({
           <div
             className={cn(
               "mt-1.5 flex items-center gap-0.5 transition-opacity [@media(hover:none)]:opacity-100",
-              isLast ? "opacity-100" : "opacity-0 group-hover:opacity-100 focus-within:opacity-100",
+              isLast
+                ? "opacity-100"
+                : "opacity-0 group-hover:opacity-100 focus-within:opacity-100",
             )}
           >
             <CopyAction text={message.content} />
+
             <IconAction
               label="Good response"
               active={message.feedback === "up"}
@@ -159,6 +193,7 @@ export function Message({
             >
               <ThumbsUpIcon />
             </IconAction>
+
             <IconAction
               label="Bad response"
               active={message.feedback === "down"}
@@ -166,11 +201,16 @@ export function Message({
             >
               <ThumbsDownIcon />
             </IconAction>
+
             {isLast && (
-              <IconAction label="Regenerate" onClick={() => onRegenerate(message.id)}>
+              <IconAction
+                label="Regenerate"
+                onClick={() => onRegenerate(message.id)}
+              >
                 <RefreshCwIcon />
               </IconAction>
             )}
+
             {meta && (
               <span className="ml-2 inline-flex items-center gap-1 text-xs text-muted-foreground">
                 {meta.local ? (

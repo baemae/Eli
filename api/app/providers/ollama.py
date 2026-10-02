@@ -1,6 +1,7 @@
 """Local models served by Ollama via the official Python SDK."""
 
 from collections.abc import AsyncIterator
+import base64
 
 import httpx
 from ollama import AsyncClient, ResponseError
@@ -33,11 +34,14 @@ class OllamaProvider(Provider):
         for item in response.models:
             if not item.model:
                 continue
+
             details = item.details
-            # Embedding-only models cannot chat, so keep them out of the dropdown.
+
             families = (details.families or []) if details else []
+
             if any("bert" in f for f in families) or "embed" in item.model:
                 continue
+
             models.append(
                 ModelInfo(
                     id=item.model,
@@ -49,6 +53,7 @@ class OllamaProvider(Provider):
                     family=details.family if details else None,
                 )
             )
+
         return sorted(models, key=lambda m: m.name)
 
     async def stream_chat(
@@ -57,18 +62,73 @@ class OllamaProvider(Provider):
         messages: list[ChatMessage],
         temperature: float | None = None,
     ) -> AsyncIterator[str]:
+
         options = {"temperature": temperature} if temperature is not None else None
+
+        ollama_messages = []
+
+        for message in messages:
+            if isinstance(message.content, str):
+                ollama_messages.append(
+                    {
+                        "role": message.role,
+                        "content": message.content,
+                    }
+                )
+                continue
+
+            text_parts = []
+            images = []
+
+            for part in message.content:
+                part_type = part.get("type")
+
+                if part_type == "text":
+                    text = part.get("text", "")
+                    if text:
+                        text_parts.append(text)
+
+                elif part_type == "image_url":
+                    image_url = part.get("image_url", {}).get("url", "")
+
+                    if image_url.startswith("data:"):
+                        try:
+                            image_base64 = image_url.split(",", 1)[1]
+                            base64.b64decode(image_base64)
+                            images.append(image_base64)
+                        except (ValueError, IndexError):
+                            raise ProviderError("Invalid image attachment.")
+                    else:
+                        raise ProviderError(
+                            "Ollama image attachments must use a data URL."
+                        )
+
+            ollama_message = {
+                "role": message.role,
+                "content": "\n".join(text_parts),
+            }
+
+            if images:
+                ollama_message["images"] = images
+
+            ollama_messages.append(ollama_message)
+
         try:
             stream = await self._client.chat(
                 model=model,
-                messages=[m.model_dump() for m in messages],
+                messages=ollama_messages,
                 stream=True,
                 options=options,
             )
+
             async for chunk in stream:
                 if chunk.message and chunk.message.content:
                     yield chunk.message.content
+
         except ResponseError as exc:
             raise ProviderError(f"Ollama error: {exc.error}") from exc
+
         except (httpx.HTTPError, ConnectionError) as exc:
-            raise ProviderError(f"Ollama is not reachable at {self._host}") from exc
+            raise ProviderError(
+                f"Ollama is not reachable at {self._host}"
+            ) from exc

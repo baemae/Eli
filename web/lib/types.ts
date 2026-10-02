@@ -42,6 +42,11 @@ export interface ChatMessage {
   id: string;
   role: Role;
   content: string;
+  image?: {
+    dataUrl: string;
+    name: string;
+    type: string;
+  };
   createdAt: number;
   meta?: StreamMeta;
   error?: string;

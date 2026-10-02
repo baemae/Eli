@@ -85,7 +85,13 @@ export function useChat(selection: ModelSelection, onFinish?: () => void) {
 
       try {
         await streamChat({
-          messages: history.filter((m) => !m.error).map(({ role, content }) => ({ role, content })),
+          messages: history
+            .filter((m) => !m.error)
+            .map(({ role, content, image }) => ({
+              role,
+              content,
+              image,
+            })),
           selection: selectionRef.current,
           signal: ctrl.signal,
           onMeta: (meta) => patchMessage(convId, reply.id, { meta }),
@@ -117,11 +123,18 @@ export function useChat(selection: ModelSelection, onFinish?: () => void) {
     [patchMessage, update],
   );
 
-  const send = useCallback(
-    (text: string) => {
+ const send = useCallback(
+  (
+    text: string,
+    image?: {
+      dataUrl: string;
+      name: string;
+      type: string;
+    },
+  )  => {
       const content = text.trim();
       if (!content || controller.current) return;
-      const userMsg: ChatMessage = { id: uid(), role: "user", content, createdAt: Date.now() };
+      const userMsg: ChatMessage = { id: uid(), role: "user", content, createdAt: Date.now(), image };
       const existing = conversations.find((c) => c.id === activeId);
       if (existing) {
         void generate(existing.id, [...existing.messages.filter((m) => !m.error), userMsg]);
