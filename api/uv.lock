@@ -2,8 +2,12 @@ version = 1
 revision = 3
 requires-python = ">=3.13"
 resolution-markers = [
-    "python_full_version >= '3.14'",
-    "python_full_version < '3.14'",
+    "python_full_version >= '3.14' and sys_platform == 'win32'",
+    "python_full_version >= '3.14' and sys_platform == 'emscripten'",
+    "python_full_version >= '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
+    "python_full_version < '3.14' and sys_platform == 'win32'",
+    "python_full_version < '3.14' and sys_platform == 'emscripten'",
+    "python_full_version < '3.14' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 
 [[package]]
@@ -28,6 +32,7 @@ dependencies = [
     { name = "openai" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
+    { name = "python-multipart" },
 ]
 
 [package.dev-dependencies]
@@ -47,6 +52,7 @@ requires-dist = [
     { name = "openai", specifier = ">=3.19" },
     { name = "pydantic", specifier = ">=2.11" },
     { name = "pydantic-settings", specifier = ">=2.15" },
+    { name = "python-multipart", specifier = ">=0.0.32" },
 ]
 
 [package.metadata.requires-dev]

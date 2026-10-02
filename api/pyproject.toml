@@ -13,6 +13,7 @@ dependencies = [
     "anthropic>=1.8",
     "httpx>=0.28",
     "livekit-api>=1.2.1",
+    "python-multipart>=0.0.32",
 ]
 
 [dependency-groups]
