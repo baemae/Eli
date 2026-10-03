@@ -27,7 +27,10 @@ export interface ModelsResponse {
 }
 
 /** `null` means "Auto": local model first, then cloud fallback. */
-export type ModelSelection = { provider: string; model: string } | null;
+export type ModelSelection = {
+  provider: string;
+  model: string;
+} | null;
 
 export interface StreamMeta {
   provider: string;
@@ -42,16 +45,25 @@ export interface ChatMessage {
   id: string;
   role: Role;
   content: string;
+
   image?: {
     dataUrl: string;
     name: string;
     type: string;
   };
+
+  file?: {
+    dataUrl: string;
+    name: string;
+    type: string;
+  };
+
   createdAt: number;
   meta?: StreamMeta;
   error?: string;
   pending?: boolean;
   feedback?: "up" | "down" | null;
+
   /** Spoken in voice mode (transcript) rather than typed. */
   voice?: boolean;
 }
