@@ -11,6 +11,7 @@ import {
   ArrowUpIcon,
   AudioLinesIcon,
   ImagePlusIcon,
+  PaperclipIcon,
   SquareIcon,
   XIcon,
 } from "lucide-react";
@@ -30,6 +31,12 @@ export type ComposerImage = {
   type: string;
 };
 
+export type ComposerFile = {
+  dataUrl: string;
+  name: string;
+  type: string;
+};
+
 export function Composer({
   onSend,
   onStop,
@@ -39,7 +46,11 @@ export function Composer({
   placeholder = `Message ${APP_CONFIG.appName}…`,
   autoFocus,
 }: {
-  onSend: (text: string, image?: ComposerImage) => void;
+  onSend: (
+    text: string,
+    image?: ComposerImage,
+    file?: ComposerFile,
+  ) => void;
   onStop: () => void;
   onVoice?: () => void;
   streaming: boolean;
@@ -49,6 +60,7 @@ export function Composer({
 }) {
   const [value, setValue] = useState("");
   const [image, setImage] = useState<ComposerImage | null>(null);
+  const [file, setFile] = useState<ComposerFile | null>(null);
 
   const ref = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -59,15 +71,15 @@ export function Composer({
     }
   }, [autoFocus]);
 
-  const chooseImage = (file?: File) => {
-    if (!file) return;
+  const chooseImage = (selectedFile?: File) => {
+    if (!selectedFile) return;
 
-    if (!file.type.startsWith("image/")) {
+    if (!selectedFile.type.startsWith("image/")) {
       window.alert("Please select an image file.");
       return;
     }
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (selectedFile.size > 10 * 1024 * 1024) {
       window.alert("Image must be smaller than 10 MB.");
       return;
     }
@@ -79,24 +91,71 @@ export function Composer({
 
       setImage({
         dataUrl: reader.result,
-        name: file.name,
-        type: file.type,
+        name: selectedFile.name,
+        type: selectedFile.type,
       });
+
+      setFile(null);
     };
 
-    reader.readAsDataURL(file);
+    reader.readAsDataURL(selectedFile);
+  };
+
+  const chooseFile = (selectedFile?: File) => {
+    if (!selectedFile) return;
+
+    const allowedTypes = [
+      "application/pdf",
+      "text/plain",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ];
+
+    const isDocx =
+      selectedFile.name.toLowerCase().endsWith(".docx");
+
+    if (!allowedTypes.includes(selectedFile.type) && !isDocx) {
+      window.alert("Please select a PDF, TXT, or DOCX file.");
+      return;
+    }
+
+    if (selectedFile.size > 10 * 1024 * 1024) {
+      window.alert("File must be smaller than 10 MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      if (typeof reader.result !== "string") return;
+
+      setFile({
+        dataUrl: reader.result,
+        name: selectedFile.name,
+        type: selectedFile.type,
+      });
+
+      setImage(null);
+    };
+
+    reader.readAsDataURL(selectedFile);
   };
 
   const submit = (e?: FormEvent) => {
     e?.preventDefault();
 
     if (streaming) return onStop();
-    if ((!value.trim() && !image) || disabled) return;
 
-    onSend(value.trim(), image ?? undefined);
+    if ((!value.trim() && !image && !file) || disabled) return;
+
+    onSend(
+      value.trim(),
+      image ?? undefined,
+      file ?? undefined,
+    );
 
     setValue("");
     setImage(null);
+    setFile(null);
 
     if (fileRef.current) {
       fileRef.current.value = "";
@@ -118,9 +177,17 @@ export function Composer({
   };
 
   const canSend =
-    streaming || (!!value.trim() && !disabled) || (!!image && !disabled);
+    streaming ||
+    (!!value.trim() && !disabled) ||
+    (!!image && !disabled) ||
+    (!!file && !disabled);
 
-  const showVoice = !!onVoice && !streaming && !value.trim() && !image;
+  const showVoice =
+    !!onVoice &&
+    !streaming &&
+    !value.trim() &&
+    !image &&
+    !file;
 
   return (
     <form
@@ -152,6 +219,27 @@ export function Composer({
         </div>
       )}
 
+      {file && (
+        <div className="mb-2 flex items-center gap-2">
+          <div className="relative flex items-center gap-2 rounded-xl border px-3 py-2">
+            <PaperclipIcon className="size-4" />
+
+            <span className="max-w-48 truncate text-xs text-muted-foreground">
+              {file.name}
+            </span>
+
+            <button
+              type="button"
+              onClick={() => setFile(null)}
+              className="grid size-5 place-items-center rounded-full border bg-background"
+              aria-label="Remove file"
+            >
+              <XIcon className="size-3" />
+            </button>
+          </div>
+        </div>
+      )}
+
       <label htmlFor="composer" className="sr-only">
         Message
       </label>
@@ -171,9 +259,19 @@ export function Composer({
       <input
         ref={fileRef}
         type="file"
-        accept="image/*"
+        accept="image/*,application/pdf,text/plain,.docx"
         className="hidden"
-        onChange={(e) => chooseImage(e.target.files?.[0])}
+        onChange={(e) => {
+          const selectedFile = e.target.files?.[0];
+
+          if (!selectedFile) return;
+
+          if (selectedFile.type.startsWith("image/")) {
+            chooseImage(selectedFile);
+          } else {
+            chooseFile(selectedFile);
+          }
+        }}
       />
 
       <div className="mt-1 flex items-center justify-between">
@@ -185,14 +283,16 @@ export function Composer({
               variant="ghost"
               disabled={streaming || disabled}
               onClick={() => fileRef.current?.click()}
-              aria-label="Attach image"
+              aria-label="Attach image or file"
               className="rounded-full"
             >
               <ImagePlusIcon />
             </Button>
           </TooltipTrigger>
 
-          <TooltipContent>Attach image</TooltipContent>
+          <TooltipContent>
+            Attach image or file
+          </TooltipContent>
         </Tooltip>
 
         <div className="flex items-center">
@@ -209,15 +309,25 @@ export function Composer({
                   <AudioLinesIcon />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Start voice mode</TooltipContent>
+
+              <TooltipContent>
+                Start voice mode
+              </TooltipContent>
             </Tooltip>
           ) : (
             <Button
               type="submit"
               size="icon"
               disabled={!canSend}
-              aria-label={streaming ? "Stop generating" : "Send message"}
-              className={cn("rounded-full", !canSend && "opacity-30")}
+              aria-label={
+                streaming
+                  ? "Stop generating"
+                  : "Send message"
+              }
+              className={cn(
+                "rounded-full",
+                !canSend && "opacity-30",
+              )}
             >
               {streaming ? (
                 <SquareIcon className="size-3.5 fill-current" />
